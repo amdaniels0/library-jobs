@@ -23,12 +23,12 @@ The feed is updated automatically every 6 hours with new job postings.
 
 ## 📝 Features
 
-- ✅ 590+ active job listings
+- ✅ active job listings
 - ✅ Automatic deduplication
 - ✅ Search functionality
 - ✅ Mobile-friendly interface
 - ✅ RSS feed for easy subscription
-- ✅ JSON API for developers
+- ✅ JSON API for development
 
 ## 🛠️ Technical Details
 
