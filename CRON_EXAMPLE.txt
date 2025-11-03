@@ -1,0 +1,11 @@
+# Add these lines to your crontab (run: crontab -e)
+
+# Run job aggregator every 6 hours
+0 */6 * * * /home/bowser/job-aggregator/run_aggregator.sh >> /home/bowser/job-aggregator/logs/cron.log 2>&1
+
+# Deploy to GitHub Pages 5 minutes after aggregation
+5 */6 * * * cd /home/bowser/job-feed-site && ./deploy.sh >> /home/bowser/job-aggregator/logs/deploy.log 2>&1
+
+# This will run at: 00:05, 06:05, 12:05, 18:05 (deploy)
+# After aggregation at: 00:00, 06:00, 12:00, 18:00
+
