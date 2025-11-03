@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /CNAME
 
-Sitemap: https://YOUR-USERNAME.github.io/YOUR-REPO/sitemap.xml
+Sitemap: https://amdaniels0.github.io/library-jobs/sitemap.xml
