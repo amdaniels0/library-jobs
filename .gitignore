@@ -1,0 +1,10 @@
+# Don't commit these
+*.db
+*.log
+*.pyc
+__pycache__/
+.DS_Store
+.env
+venv/
+*.swp
+*~
