@@ -4,9 +4,9 @@ A consolidated job feed aggregating library, archives, and information science p
 
 ## 🔗 Links
 
-- **[View Jobs](https://amdaniels0.github.io/YOUR-REPO/)** - Browse all available positions
-- **[RSS Feed](https://amdaniels0.github.io/YOUR-REPO/consolidated-jobs.xml)** - Subscribe for updates
-- **[JSON API](https://amdaniels0.github.io/YOUR-REPO/jobs.json)** - Programmatic access
+- **[View Jobs](https://amdaniels0.github.io/library-jobs/)** - Browse all available positions
+- **[RSS Feed](https://amdaniels0.github.io/library-jobs/consolidated-jobs.xml)** - Subscribe for updates
+- **[JSON API](https://amdaniels0.github.io/library-jobs/jobs.json)** - Programmatic access
 
 ## 📊 Data Sources
 
