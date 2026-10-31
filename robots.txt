@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /CNAME
-
-Sitemap: https://amdaniels0.github.io/library-jobs/sitemap.xml

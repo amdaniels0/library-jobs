@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<link rel="alternate" type="application/rss+xml" title="{{title}}" href="consolidated-jobs.xml">
+<link rel="stylesheet" href="style.css?v={{version}}">
+<script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <h1>{{title}}</h1>
+    <p class="lede">{{description}}</p>
+    <p class="stats">{{active}} open positions · Updated {{updated}}</p>
+    <nav class="links" aria-label="Feeds">
+      <a href="consolidated-jobs.xml">RSS feed</a>
+      <a href="jobs.json">JSON</a>
+      <a href="{{repo}}">Source code</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <form id="filters" class="filters" role="search" aria-label="Filter jobs">
+    <label class="field search">
+      <span>Search</span>
+      <input type="search" name="q" placeholder="Title, employer, city…" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>Job board</span>
+      <select name="board"><option value="">All boards</option>{{board_options}}</select>
+    </label>
+    <label class="field">
+      <span>Location</span>
+      <select name="state"><option value="">Anywhere</option>{{state_options}}</select>
+    </label>
+    <label class="field">
+      <span>Type</span>
+      <select name="type">
+        <option value="">Any type</option>
+        <option value="no-training">No internships or fellowships</option>
+        <option value="Internship">Internships</option>
+        <option value="Fellowship">Fellowships and residencies</option>
+        <option value="Part-time">Part-time</option>
+        <option value="Temporary">Temporary or term</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Posted</span>
+      <select name="posted">
+        <option value="">Any time</option>
+        <option value="3">Past 3 days</option>
+        <option value="7">Past week</option>
+        <option value="30">Past month</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Sort</span>
+      <select name="sort">
+        <option value="newest">Newest first</option>
+        <option value="deadline">Deadline soonest</option>
+        <option value="employer">Employer A–Z</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <label class="check"><input type="checkbox" name="remote" value="1"> Remote or hybrid only</label>
+      <button type="reset">Clear filters</button>
+    </div>
+  </form>
+
+  <p id="count" class="count" aria-live="polite">{{active}} jobs</p>
+  <ol id="jobs" class="jobs">
+{{jobs}}
+  </ol>
+  <p id="empty" class="empty" hidden>No jobs match these filters. <button type="button" id="empty-reset">Clear filters</button></p>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Listings are gathered from {{sources}}. Each listing belongs to its source; confirm details on the original posting before applying.</p>
+    <p>A job is removed once its application deadline passes or no source has listed it for {{expiry_days}} days. Salary, deadline, and job type appear only when the source provides them.</p>
+  </div>
+</footer>
+<script src="app.js?v={{version}}"></script>
+</body>
+</html>
