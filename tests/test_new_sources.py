@@ -6,7 +6,8 @@ import pytest
 from aggregator import config, db, sources
 from aggregator.details import parse_jobposting
 from aggregator.sources import parse_code4lib, parse_dlf, parse_dpc, parse_simmons, parse_usajobs
-from aggregator.text import employment_label, format_pay, parse_location, relevant_title
+from aggregator.text import (employment_label, format_pay, job_family, location_bucket, parse_location,
+                             relevant_title)
 
 SOURCE = {s["parser"]: s for s in reversed(config.SOURCES)}
 NOW = datetime(2026, 10, 31, 14, 0, tzinfo=timezone.utc)
@@ -109,6 +110,32 @@ def test_title_filter():
     assert not relevant_title("Provost & Chief Academic Officer")
     assert not relevant_title("Assistant Professor of Practice - Construction Management")
     assert not relevant_title("Conservatory Faculty, Voice")
+
+
+@pytest.mark.parametrize("location, state, us_only, expected", [
+    ("Pittsburgh, PA", "PA", False, ("state", "PA")),
+    ("Kunshan, Jiangsu, China", "", False, ("country", "China")),
+    ("Lebanon (LB)", "", False, ("country", "Lebanon")),
+    ("AE", "", True, ("country", "United Arab Emirates")),
+    ("Vancouver, BC, Canada", "", False, ("country", "Canada")),
+    ("Toronto, ON", "", False, ("country", "Canada")),
+    ("Irvine, California (US)", "", False, ("state", "CA")),  # stored before the parser fix
+    ("Georgia Gwinnett College", "", True, ("us", "")),
+    ("Multiple Locations", "", True, ("us", "")),
+    ("", "", False, ("none", "")),
+])
+def test_location_bucket(location, state, us_only, expected):
+    assert location_bucket(location, state, us_only) == expected
+
+
+def test_job_family():
+    assert job_family("Director of Archives and Special Collections") == "Leadership"
+    assert job_family("Assistant Professor of Data Science") == "Faculty & teaching"
+    assert job_family("Processing Archivist") == "Archives & special collections"
+    assert job_family("Metadata Librarian") == "Metadata & technical services"
+    assert job_family("Seasonal Capstone Props Supervisor") == "Performing arts & events"
+    assert job_family("Reference and Instruction Librarian") == "Research, instruction & outreach"
+    assert job_family("Librarian I") == "Librarian, other"
 
 
 def test_helpers():

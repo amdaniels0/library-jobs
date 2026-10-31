@@ -119,12 +119,14 @@ def state_code(token: str) -> str:
     return _STATE_BY_NAME.get(token.lower(), "")
 
 
-_DC_RE = re.compile(r"\bWashington,?\s+D\.?\s?C\.?(?=,|$)", re.IGNORECASE)
+_DC_RE = re.compile(r"\bWashington,?\s+D\.?\s?C\.?(?=,|/|\s|$)", re.IGNORECASE)
+# "Irvine, California (US)", "Washington, DC/Remote", "Bloomington, Indiana or remote"
+_LOCATION_NOISE_RE = re.compile(r"\s*\((?:US|USA|U\.S\.A?\.?)\)|\s*(?:/|\bor\b)\s*remote\b.*$", re.IGNORECASE)
 
 
 def parse_location(raw: str) -> tuple:
     """Normalize a location string. Returns (display, state_code)."""
-    text = _DC_RE.sub("Washington, DC", clean(raw))
+    text = _LOCATION_NOISE_RE.sub("", _DC_RE.sub("Washington, DC", clean(raw))).strip(" ,")
     if not text:
         return "", ""
     parts = [p for p in (p.strip() for p in text.split(",")) if p and p.lower() not in _COUNTRY_SUFFIXES]
@@ -145,7 +147,69 @@ def parse_location(raw: str) -> tuple:
         if not city:
             return US_STATES[code], code
         return f"{city}, {code}", code
+    # "Virginia, Richmond": a full state name in another position (not two-letter codes, which are ambiguous).
+    for i, part in enumerate(parts[:-1]):
+        code = _STATE_BY_NAME.get(part.lower())
+        if code and not country_of(", ".join(parts)):
+            return f"{', '.join(parts[:i] + parts[i + 1:])}, {code}", code
     return ", ".join(parts), ""
+
+
+# Countries seen in (or plausible for) postings, by lowercase name, alias, or two-letter code.
+# US state codes are checked first, so codes like CA (California) never reach this table.
+_COUNTRIES = {
+    "canada": "Canada", "united kingdom": "United Kingdom", "uk": "United Kingdom", "gb": "United Kingdom",
+    "great britain": "United Kingdom", "england": "United Kingdom", "scotland": "United Kingdom",
+    "wales": "United Kingdom", "northern ireland": "United Kingdom", "ireland": "Ireland", "ie": "Ireland",
+    "australia": "Australia", "au": "Australia", "new zealand": "New Zealand", "nz": "New Zealand",
+    "hong kong": "Hong Kong", "hk": "Hong Kong", "china": "China", "cn": "China", "taiwan": "Taiwan",
+    "tw": "Taiwan", "japan": "Japan", "jp": "Japan", "south korea": "South Korea", "korea": "South Korea",
+    "kr": "South Korea", "singapore": "Singapore", "sg": "Singapore", "india": "India", "malaysia": "Malaysia",
+    "thailand": "Thailand", "vietnam": "Vietnam", "philippines": "Philippines", "indonesia": "Indonesia",
+    "germany": "Germany", "france": "France", "fr": "France", "netherlands": "Netherlands", "nl": "Netherlands",
+    "belgium": "Belgium", "be": "Belgium", "switzerland": "Switzerland", "ch": "Switzerland", "italy": "Italy",
+    "it": "Italy", "spain": "Spain", "es": "Spain", "portugal": "Portugal", "austria": "Austria", "at": "Austria",
+    "sweden": "Sweden", "se": "Sweden", "norway": "Norway", "no": "Norway", "denmark": "Denmark", "dk": "Denmark",
+    "finland": "Finland", "fi": "Finland", "iceland": "Iceland", "estonia": "Estonia", "poland": "Poland",
+    "czech republic": "Czech Republic", "hungary": "Hungary", "greece": "Greece", "turkey": "Turkey",
+    "armenia": "Armenia", "am": "Armenia", "israel": "Israel", "il": "Israel", "lebanon": "Lebanon",
+    "lb": "Lebanon", "qatar": "Qatar", "qa": "Qatar", "united arab emirates": "United Arab Emirates",
+    "uae": "United Arab Emirates", "ae": "United Arab Emirates", "abu dhabi": "United Arab Emirates",
+    "dubai": "United Arab Emirates", "saudi arabia": "Saudi Arabia", "sa": "Saudi Arabia", "egypt": "Egypt",
+    "eg": "Egypt", "south africa": "South Africa", "za": "South Africa", "kenya": "Kenya", "nigeria": "Nigeria",
+    "ghana": "Ghana", "mexico": "Mexico", "mx": "Mexico", "brazil": "Brazil", "br": "Brazil",
+    "argentina": "Argentina", "chile": "Chile", "colombia": "Colombia", "peru": "Peru", "jamaica": "Jamaica",
+    # Canadian provinces (NL and SK are left out: they are also country codes).
+    "ontario": "Canada", "on": "Canada", "quebec": "Canada", "qc": "Canada", "british columbia": "Canada",
+    "bc": "Canada", "alberta": "Canada", "ab": "Canada", "manitoba": "Canada", "mb": "Canada",
+    "saskatchewan": "Canada", "nova scotia": "Canada", "ns": "Canada", "new brunswick": "Canada", "nb": "Canada",
+    "newfoundland and labrador": "Canada", "prince edward island": "Canada", "pe": "Canada",
+}
+
+
+def country_of(location: str) -> str:
+    """The non-US country named in a location string ('Kunshan, Jiangsu, China', 'Lebanon (LB)', 'AE'), or ''."""
+    text = clean(location)
+    parts = re.split(r"\s*[,()]\s*", text)
+    for part in reversed([p.strip(" .").lower() for p in parts if p.strip(" .")]):
+        if part in _COUNTRIES and not (len(part) == 2 and part.upper() in US_STATES):
+            return _COUNTRIES[part]
+    return ""
+
+
+def location_bucket(location: str, state: str, us_only_source: bool = False) -> tuple:
+    """Classify a job's location: ('state', 'PA'), ('country', 'Canada'), ('us', ''), or ('none', '')."""
+    if not state:
+        # Locations stored before a parser fix get another chance ("Bloomington, Indiana or remote").
+        _, state = parse_location(location)
+    if state:
+        return "state", state
+    country = country_of(location)
+    if country:
+        return "country", country
+    if us_only_source or re.search(r"\bunited states\b|\(us\)", location or "", re.IGNORECASE):
+        return "us", ""
+    return "none", ""
 
 
 _REMOTE_RE = re.compile(r"\b(fully remote|remote|telework|work from home)\b", re.IGNORECASE)
@@ -205,6 +269,37 @@ _RELEVANT_TITLE_RE = re.compile(
     r"digital (scholarship|humanities|asset|initiatives|stewardship|collections|projects)|repositor|"
     r"scholarly (publishing|communication)|exhibit|historic|information scien|records manag",
     re.IGNORECASE)
+
+
+_FAMILIES = [
+    ("Faculty & teaching", r"\bprofessor|\blecturer|\binstructor\b|\bfaculty\b|\bpostdoc|\bteaching\b"),
+    ("Leadership", r"\bdean\b|\bdirector\b|\bhead\b|\bchair\b|\bchief\b|university librarian|\bAUL\b"),
+    ("Archives & special collections", r"archiv|special collections|manuscript|rare book|\brecords\b"),
+    ("Museums & curatorial", r"museum|curat|exhibit|\bgallery\b|collections manager|registrar|visitor (experience|services)"),
+    # Mostly from HigherEdJobs' broad Arts & Museum Administration category.
+    ("Performing arts & events", r"theat|perform|\bstage\b|props|concert|music|\bevents?\b|ticket|box office|venue"),
+    ("Administration & operations", r"marketing|communications|business|financ|budget|fundrais|advancement|"
+                                    r"development (officer|associate|coordinator)|human resources|operations|administrative"),
+    ("Conservation & preservation", r"\bconservat(or|ion)|preservation"),
+    ("Metadata & technical services", r"metadata|catalog|technical services|acquisition|electronic resources|"
+                                      r"e-resources|collection development|collection strategy"),
+    ("Digital, data & technology", r"digital|\bdata\b|systems|technolog|developer|software|\bweb\b|\bGIS\b|"
+                                   r"informatics|analyst|engineer|computing|\bIT\b|\bAI\b"),
+    ("Research, instruction & outreach", r"reference|instruction|research|liaison|subject|outreach|engagement|"
+                                         r"learning|scholarly|literacy|student success|education"),
+    ("Library staff & access services", r"assistant|associate|technician|circulation|access services|clerk|"
+                                        r"specialist|\bpage\b|\baide\b"),
+    ("Librarian, other", r"librar"),
+]
+_FAMILY_RES = [(name, re.compile(pattern, re.IGNORECASE)) for name, pattern in _FAMILIES]
+
+
+def job_family(title: str) -> str:
+    """Rough job family from the title, first match wins (so 'Director of Archives' is Leadership)."""
+    for name, pattern in _FAMILY_RES:
+        if pattern.search(title or ""):
+            return name
+    return "Other"
 
 
 def relevant_title(title: str) -> bool:

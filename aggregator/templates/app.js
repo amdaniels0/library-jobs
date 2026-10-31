@@ -38,7 +38,7 @@
   function matches(card, f) {
     const d = card.dataset;
     if (f.board && d.board !== f.board) return false;
-    if (f.state && d.state !== f.state && !(f.state === "other" && !d.state)) return false;
+    if (f.state && d.state !== f.state) return false;
     if (f.remote && !d.remote) return false;
     if (f.posted && !(d.posted && Date.now() - Date.parse(d.posted) <= Number(f.posted) * day)) return false;
     if (f.type) {

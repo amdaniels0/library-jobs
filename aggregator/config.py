@@ -105,5 +105,12 @@ SOURCES = [
 ]
 
 BOARD_BY_SOURCE = {s["name"]: s["board"] for s in SOURCES}
+# Sources that only search US jobs: a job from one with no state is "US, state not listed", not "not listed".
+US_ONLY_SOURCES = {s["name"] for s in SOURCES if "countrycode=US" in s["url"] or s["parser"] == "usajobs"}
+# Boards whose feeds list every open job. Others show only their newest items (Archives Gig 10, the Chronicle
+# and Inside Higher Ed 20), so a job leaving those feeds may just have been pushed out by newer posts.
+# Only these boards are used to measure how long postings stay up.
+COMPLETE_FEED_BOARDS = {"HigherEdJobs", "SAA Careers", "CLIR+DLF", "USAJOBS"}
+COMPLETE_FEED_SOURCES = {s["name"] for s in SOURCES if s["board"] in COMPLETE_FEED_BOARDS}
 # Legacy rows from the Pi database used this source name.
 BOARD_BY_SOURCE["ALA Joblist"] = "ALA JobLIST"

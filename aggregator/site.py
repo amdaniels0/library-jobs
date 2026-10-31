@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 
 from . import config, db, trends
-from .text import US_STATES, parse_time
+from .text import US_STATES, location_bucket, parse_time
 
 log = logging.getLogger(__name__)
 TEMPLATES = Path(__file__).parent / "templates"
@@ -43,6 +43,21 @@ def _board(source: str) -> str:
     return config.BOARD_BY_SOURCE.get(source, source)
 
 
+# Location filter values for jobs without a US state, in the order they're listed after the states.
+LOCATION_GROUPS = {"us": "US, state not listed", "intl": "Outside the US", "none": "Location not listed"}
+
+
+def location_key(job) -> str:
+    """A US state code, or one of LOCATION_GROUPS."""
+    kind, value = location_bucket(job["location"], job["state"], job["source"] in config.US_ONLY_SOURCES)
+    return {"state": value, "country": "intl"}.get(kind, kind)
+
+
+def country(job) -> str:
+    kind, value = location_bucket(job["location"], job["state"], job["source"] in config.US_ONLY_SOURCES)
+    return "United States" if kind in ("state", "us") else value
+
+
 def _posted(job):
     return parse_time(job["posted_date"]) or parse_time(job["first_seen"])
 
@@ -54,7 +69,7 @@ def _card(job, order, now) -> str:
     types = [t.strip() for t in job["job_type"].split(",") if t.strip()]
     board = _board(job["source"])
     attrs = {
-        "data-order": order, "data-board": board, "data-state": job["state"],
+        "data-order": order, "data-board": board, "data-state": location_key(job),
         "data-types": "|".join(types), "data-remote": job["remote"],
         "data-posted": posted.date().isoformat() if posted else "",
         "data-deadline": deadline, "data-org": job["organization"].lower(),
@@ -63,7 +78,9 @@ def _card(job, order, now) -> str:
 
     meta = []
     if job["location"]:
-        meta.append(f'<li>{escape(job["location"])}</li>')
+        # A bare country code ("AE") reads better as the country's name.
+        place = country(job) if len(job["location"]) <= 3 and location_key(job) == "intl" else job["location"]
+        meta.append(f'<li>{escape(place)}</li>')
     if job["salary"]:
         meta.append(f'<li class="salary">{escape(job["salary"])}</li>')
     if posted:
@@ -112,10 +129,11 @@ def render_index(jobs, now) -> str:
     boards, states = {}, {}
     for job in jobs:
         boards[_board(job["source"])] = boards.get(_board(job["source"]), 0) + 1
-        key = job["state"] or "other"
+        key = location_key(job)
         states[key] = states.get(key, 0) + 1
-    state_labels = {**US_STATES, "other": "Outside US or unspecified"}
-    ordered_states = dict(sorted(states.items(), key=lambda kv: (kv[0] == "other", state_labels.get(kv[0], kv[0]))))
+    state_labels = {**US_STATES, **LOCATION_GROUPS}
+    ordered_states = dict(sorted(states.items(), key=lambda kv: (
+        list(LOCATION_GROUPS).index(kv[0]) + 1 if kv[0] in LOCATION_GROUPS else 0, state_labels.get(kv[0], kv[0]))))
     sources = ", ".join(f'<a href="{url}">{escape(name)}</a>' for name, url in BOARD_URLS.items() if name in boards)
 
     replacements = {
@@ -143,6 +161,7 @@ def _public(job) -> dict:
         "organization": job["organization"],
         "location": job["location"],
         "state": job["state"],
+        "country": country(job),
         "remote": job["remote"],
         "salary": job["salary"],
         "job_type": job["job_type"],

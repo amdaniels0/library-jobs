@@ -132,7 +132,9 @@ button {
 .site-footer { margin-top: 32px; padding: 20px 0 32px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
 
 /* Trends page */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 8px; }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .tiles { grid-template-columns: 1fr; } }
 .tile, .chart { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
 .tile { padding: 14px 16px; }
 .tile-label { margin: 0; color: var(--muted); font-size: 0.85rem; }
@@ -169,6 +171,12 @@ button {
 .table-view table { border-collapse: collapse; margin-top: 8px; width: 100%; }
 .table-view th, .table-view td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--grid); }
 .table-view td:nth-child(2) { font-variant-numeric: tabular-nums; }
+
+.trends-caveat { margin: 20px 0 0; color: var(--muted); font-size: 0.9rem; }
+.data-note { margin: 28px 0 8px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; max-width: 75ch; }
+.data-note h2 { margin: 0 0 8px; font-size: 1.15rem; }
+.data-note p, .data-note li { line-height: 1.55; }
+.data-note li + li { margin-top: 8px; }
 
 .tooltip {
   position: absolute; z-index: 10; max-width: 260px; pointer-events: none;
