@@ -1,7 +1,7 @@
 """Text cleanup and field extraction shared by all sources."""
 import html
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
@@ -210,6 +210,17 @@ _RELEVANT_TITLE_RE = re.compile(
 def relevant_title(title: str) -> bool:
     """Keyword searches on general job boards also match unrelated jobs; keep library/archives/museum work."""
     return bool(_RELEVANT_TITLE_RE.search(title or ""))
+
+
+def parse_time(value):
+    """ISO date or datetime string -> timezone-aware datetime (UTC if none given), or None."""
+    if not value:
+        return None
+    try:
+        stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
 
 
 def parse_us_date(text: str) -> str:

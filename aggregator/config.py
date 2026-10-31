@@ -25,6 +25,12 @@ EXPIRY_DAYS = 60
 NEW_DAYS = 7
 RSS_MAX_ITEMS = 500
 
+# Shown on the Trends page beside a month, so readers don't mistake a change in sources for a change in the market.
+TRENDS_NOTES = {
+    "2026-10": "Six sources were added on Oct 31 (Simmons Jobline, CLIR+DLF, Code4Lib, the Digital Preservation "
+               "Coalition, USAJOBS, and keyword searches), so counts from here on aren't comparable with earlier months.",
+}
+
 # Detail pages are fetched once per job, only on boards whose pages carry
 # schema.org JobPosting data. HigherEdJobs blocks automated page requests.
 DETAIL_DOMAINS = {"jobs.chronicle.com", "careers.insidehighered.com", "jobs.diglib.org", "jobs.code4lib.org"}

@@ -9,8 +9,8 @@ from zoneinfo import ZoneInfo
 
 from feedgen.feed import FeedGenerator
 
-from . import config, db
-from .text import US_STATES
+from . import config, db, trends
+from .text import US_STATES, parse_time
 
 log = logging.getLogger(__name__)
 TEMPLATES = Path(__file__).parent / "templates"
@@ -28,16 +28,6 @@ BOARD_URLS = {
     "Digital Preservation Coalition": "https://www.dpconline.org/news/job-vacancies",
     "USAJOBS": "https://www.usajobs.gov/",
 }
-
-
-def parse_time(value):
-    if not value:
-        return None
-    try:
-        stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
 
 
 def _short_date(stamp, now) -> str:
@@ -206,7 +196,8 @@ def build(conn, out_dir=config.SITE_DIR, now=None) -> int:
         {"generated_at": now.isoformat(), "total_jobs": len(jobs), "jobs": [_public(j) for j in jobs]},
         indent=1, ensure_ascii=False))
     (out / "consolidated-jobs.xml").write_bytes(render_rss(jobs, now))
-    for name in ("style.css", "app.js", "robots.txt"):
+    trends.build(conn, jobs, out, now)
+    for name in ("style.css", "app.js", "trends.js", "robots.txt"):
         shutil.copyfile(TEMPLATES / name, out / name)
     log.info("Built site with %d jobs in %s", len(jobs), out)
     return len(jobs)
