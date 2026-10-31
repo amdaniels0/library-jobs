@@ -39,7 +39,7 @@ A GitHub Actions workflow ([`.github/workflows/update.yml`](.github/workflows/up
 1. Restores the SQLite database (`jobs.db`) from the `data` branch.
 2. `python -m aggregator run`:
    - fetches every feed and parses it with a board-specific parser ([`aggregator/sources.py`](aggregator/sources.py));
-   - **health check**: stops without saving or publishing if fewer than 10 sources respond or fewer than 200 jobs come back, so an outage never wipes the site. A single failing source shows up as a warning on the run page;
+   - **health check**: stops without saving or publishing if fewer than 10 sources respond or fewer than 200 jobs come back;
    - merges each listing into the database ([`aggregator/db.py`](aggregator/db.py)). The same job posted on two boards becomes one entry with links to both. The same title on the same board in a different location stays a separate job, and a yearly repost of an expired job counts as new;
    - reads up to 80 job pages on Chronicle, Inside Higher Ed, CLIR+DLF, and Code4Lib for their schema.org `JobPosting` data (deadline, job type, employer, exact location, salary). Each page is fetched once, 3 seconds apart, and `robots.txt` is respected ([`aggregator/details.py`](aggregator/details.py)). When a page reveals an employer the feed left out, the job is matched against other boards again;
    - drops jobs whose deadline has passed or that no board has listed for 60 days;
