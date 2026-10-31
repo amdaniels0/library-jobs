@@ -1,0 +1,90 @@
+name: Update job feed
+
+on:
+  schedule:
+    # 10:00 and 22:00 UTC: 6 AM / 6 PM Eastern in summer, 5 AM / 5 PM in winter.
+    - cron: "0 10,22 * * *"
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: job-feed-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Only scheduled and manual runs on main save data and publish; pull requests are a dry run.
+      PUBLISH: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - run: python -m pytest -q
+
+      - name: Restore database from the data branch
+        run: |
+          mkdir -p data
+          if git fetch --depth=1 origin data; then
+            git show FETCH_HEAD:jobs.db > data/jobs.db
+            echo "Restored database ($(du -h data/jobs.db | cut -f1))"
+          else
+            echo "::warning::No data branch yet; starting with an empty database"
+          fi
+
+      - name: Fetch jobs and build the site
+        run: python -m aggregator run ${{ env.PUBLISH != 'true' && '--no-details' || '' }}
+        env:
+          # Optional: USAJOBS is skipped until these repository secrets exist.
+          USAJOBS_API_KEY: ${{ secrets.USAJOBS_API_KEY }}
+          USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
+
+      - name: Save database to the data branch
+        if: env.PUBLISH == 'true'
+        working-directory: data
+        run: |
+          git init -q -b data
+          git add jobs.db
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Database after run ${{ github.run_id }}"
+          # One commit, replaced each run, so the repository does not grow.
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - name: Keep a copy of the database for 30 days
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: jobs-db
+          path: data/jobs.db
+          retention-days: 30
+
+      - name: Upload site
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

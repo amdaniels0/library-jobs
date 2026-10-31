@@ -8,3 +8,9 @@ __pycache__/
 venv/
 *.swp
 *~
+
+# Local environment and generated output
+.venv/
+_site/
+data/
+.pytest_cache/
