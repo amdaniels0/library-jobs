@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import time
-from collections import Counter
 from datetime import datetime, timezone
 
 import feedparser
@@ -207,6 +206,9 @@ class SourceSkipped(Exception):
 
 
 _USAJOBS_PAY_UNITS = {"PA": "year", "PH": "hour", "PD": "day", "PM": "month", "BW": "2 weeks"}
+# PositionSchedule codes. Its Name is free text ("Flexitime", "40 hours per week"), so the code is used.
+# 3 (shift work) and 6 (multiple schedules) say nothing either way.
+_USAJOBS_SCHEDULES = {"1": "Full-time", "2": "Part-time", "4": "Part-time", "5": "Part-time"}
 
 
 def parse_usajobs(item, source):
@@ -217,7 +219,7 @@ def parse_usajobs(item, source):
     pay = (item.get("PositionRemuneration") or [{}])[0]
     salary = format_pay(pay.get("MinimumRange"), pay.get("MaximumRange"),
                         _USAJOBS_PAY_UNITS.get(pay.get("RateIntervalCode", ""), ""))
-    employment = [s.get("Name", "") for s in item.get("PositionSchedule", [])]
+    employment = [_USAJOBS_SCHEDULES.get(str(s.get("Code")), "") for s in item.get("PositionSchedule") or []]
     employment += [o.get("Name", "") for o in item.get("PositionOfferingType", [])]
     return _job({}, source, title=clean(item.get("PositionTitle")), organization=clean(item.get("OrganizationName")),
                 location=location, salary=salary, summary=clean(details.get("JobSummary")),
@@ -233,7 +235,7 @@ def fetch_usajobs(source, session) -> list:
         raise SourceSkipped("USAJOBS_API_KEY and USAJOBS_EMAIL are not set")
     # USAJOBS asks callers to identify themselves with the email the key was issued to.
     headers = {"Host": "data.usajobs.gov", "User-Agent": email, "Authorization-Key": key}
-    jobs, page, pages, schedules = [], 1, 1, Counter()
+    jobs, page, pages = [], 1, 1
     while page <= min(pages, 5):
         params = {"JobCategoryCode": ";".join(source["series"]), "HiringPath": "public",
                   "ResultsPerPage": 500, "Page": page}
@@ -241,11 +243,9 @@ def fetch_usajobs(source, session) -> list:
         response.raise_for_status()
         result = response.json()["SearchResult"]
         pages = int(result.get("UserArea", {}).get("NumberOfPages") or 1)
-        items = [item.get("MatchedObjectDescriptor", {}) for item in result.get("SearchResultItems", [])]
-        schedules.update(str([s.get("Code") for s in item.get("PositionSchedule") or []]) for item in items)
-        jobs.extend(parse_usajobs(item, source) for item in items)
+        jobs.extend(parse_usajobs(item.get("MatchedObjectDescriptor", {}), source)
+                    for item in result.get("SearchResultItems", []))
         page += 1
-    log.info("USAJOBS schedules: %s", dict(schedules))
     return [job for job in jobs if job["url"] and job["title"]]
 
 

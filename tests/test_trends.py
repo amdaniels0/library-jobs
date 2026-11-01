@@ -123,3 +123,6 @@ def test_trends_page_is_built_and_escaped(conn, tmp_path):
     assert 'href="trends.html"' in index
     assert '<option value="Archives &amp; special collections">Archives &amp; special collections (2)</option>' in index
     assert 'data-area="Archives &amp; special collections"' in index
+    # Fixture types: one Part-time, two unstated.
+    assert '<option value="regular">Excluding part-time, term, internships &amp; fellowships (2)</option>' in index
+    assert '<option value="Part-time">Part-time (1)</option>' in index

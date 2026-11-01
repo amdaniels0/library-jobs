@@ -47,6 +47,39 @@ def _board(source: str) -> str:
 LOCATION_GROUPS = {"us": "US, state not listed", "intl": "Outside the US", "none": "Location not listed"}
 
 
+# Type filter: "Leave out" options exclude jobs with any of the listed types (most postings never say
+# full-time, so excluding is more reliable than matching); "Only" options match one type.
+TYPE_FILTERS = {
+    "Leave out": {
+        "regular": ("Excluding part-time, term, internships & fellowships",
+                    ("Part-time", "Temporary", "Internship", "Fellowship")),
+        "no-training": ("Excluding internships & fellowships", ("Internship", "Fellowship")),
+    },
+    "Only": {
+        "Full-time": ("Full-time, if stated", None),
+        "Part-time": ("Part-time", None),
+        "Temporary": ("Temporary or term", None),
+        "Internship": ("Internships", None),
+        "Fellowship": ("Fellowships and residencies", None),
+    },
+}
+
+
+def _types(job) -> list:
+    return [t.strip() for t in job["job_type"].split(",") if t.strip()]
+
+
+def _type_options(jobs) -> str:
+    groups = []
+    for group, filters in TYPE_FILTERS.items():
+        options = []
+        for value, (label, leave_out) in filters.items():
+            n = sum(1 for job in jobs if (not set(leave_out) & set(_types(job)) if leave_out else value in _types(job)))
+            options.append(f'<option value="{escape(value)}">{escape(label)} ({n})</option>')
+        groups.append(f'<optgroup label="{escape(group)}">{"".join(options)}</optgroup>')
+    return "".join(groups)
+
+
 def location_key(job) -> str:
     """A US state code, or one of LOCATION_GROUPS."""
     kind, value = location_bucket(job["location"], job["state"], job["source"] in config.US_ONLY_SOURCES)
@@ -66,7 +99,7 @@ def _card(job, order, now) -> str:
     posted = _posted(job)
     due = parse_time(job["deadline"])
     deadline = due.date().isoformat() if due else ""
-    types = [t.strip() for t in job["job_type"].split(",") if t.strip()]
+    types = _types(job)
     board = _board(job["source"])
     attrs = {
         "data-order": order, "data-board": board, "data-state": location_key(job),
@@ -151,6 +184,7 @@ def render_index(jobs, now) -> str:
         "{{board_options}}": _options(dict(sorted(boards.items()))),
         "{{state_options}}": _options(ordered_states, state_labels),
         "{{area_options}}": _options(ordered_areas),
+        "{{type_options}}": _type_options(jobs),
         "{{sources}}": sources,
         "{{jobs}}": "\n".join(_card(job, i, now) for i, job in enumerate(jobs)),
     }

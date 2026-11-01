@@ -9,6 +9,7 @@
   const names = ["q", "board", "state", "area", "type", "posted", "remote", "sort"];
   const day = 86400000;
   const training = ["Internship", "Fellowship"];
+  const notRegular = ["Part-time", "Temporary", ...training];
 
   const value = (name) => {
     const field = form.elements[name];
@@ -44,7 +45,8 @@
     if (f.posted && !(d.posted && Date.now() - Date.parse(d.posted) <= Number(f.posted) * day)) return false;
     if (f.type) {
       const types = d.types ? d.types.split("|") : [];
-      if (f.type === "no-training" ? types.some((t) => training.includes(t)) : !types.includes(f.type)) return false;
+      const leaveOut = { regular: notRegular, "no-training": training }[f.type];
+      if (leaveOut ? types.some((t) => leaveOut.includes(t)) : !types.includes(f.type)) return false;
     }
     return f.terms.every((term) => text.get(card).includes(term));
   }

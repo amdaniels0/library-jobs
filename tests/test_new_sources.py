@@ -83,7 +83,7 @@ def test_usajobs_result():
         "PositionURI": "https://www.usajobs.gov:443/GetJob/ViewDetails/890665400",
         "PositionLocation": [{"LocationName": "Washington, District of Columbia"}],
         "PositionRemuneration": [{"MinimumRange": "70623.0", "MaximumRange": "91815.0", "RateIntervalCode": "PA"}],
-        "PositionSchedule": [{"Name": "Full-time"}], "PositionOfferingType": [{"Name": "Term"}],
+        "PositionSchedule": [{"Name": "Flexitime", "Code": "1"}], "PositionOfferingType": [{"Name": "Term"}],
         "PublicationStartDate": "2026-10-28T00:00:00.0000", "ApplicationCloseDate": "2026-11-18T23:59:59.9970",
         "UserArea": {"Details": {"JobSummary": "Selects materials.", "RemoteIndicator": False}},
     }
