@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import time
+from collections import Counter
 from datetime import datetime, timezone
 
 import feedparser
@@ -232,7 +233,7 @@ def fetch_usajobs(source, session) -> list:
         raise SourceSkipped("USAJOBS_API_KEY and USAJOBS_EMAIL are not set")
     # USAJOBS asks callers to identify themselves with the email the key was issued to.
     headers = {"Host": "data.usajobs.gov", "User-Agent": email, "Authorization-Key": key}
-    jobs, page, pages = [], 1, 1
+    jobs, page, pages, schedules = [], 1, 1, Counter()
     while page <= min(pages, 5):
         params = {"JobCategoryCode": ";".join(source["series"]), "HiringPath": "public",
                   "ResultsPerPage": 500, "Page": page}
@@ -240,9 +241,11 @@ def fetch_usajobs(source, session) -> list:
         response.raise_for_status()
         result = response.json()["SearchResult"]
         pages = int(result.get("UserArea", {}).get("NumberOfPages") or 1)
-        jobs.extend(parse_usajobs(item.get("MatchedObjectDescriptor", {}), source)
-                    for item in result.get("SearchResultItems", []))
+        items = [item.get("MatchedObjectDescriptor", {}) for item in result.get("SearchResultItems", [])]
+        schedules.update(str([s.get("Name") for s in item.get("PositionSchedule") or []]) for item in items)
+        jobs.extend(parse_usajobs(item, source) for item in items)
         page += 1
+    log.info("USAJOBS schedules: %s", dict(schedules))
     return [job for job in jobs if job["url"] and job["title"]]
 
 
