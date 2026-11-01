@@ -119,4 +119,7 @@ def test_trends_page_is_built_and_escaped(conn, tmp_path):
     assert "No data" in page and "Show as table" in page
     assert json.loads((out / "trends.json").read_text())["open_jobs"] == 3
     assert (out / "trends.js").exists()
-    assert 'href="trends.html"' in (out / "index.html").read_text()
+    index = (out / "index.html").read_text()
+    assert 'href="trends.html"' in index
+    assert '<option value="Archives &amp; special collections">Archives &amp; special collections (2)</option>' in index
+    assert 'data-area="Archives &amp; special collections"' in index

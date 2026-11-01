@@ -6,7 +6,7 @@
   const empty = document.getElementById("empty");
   const cards = Array.from(list.children);
   const text = new Map(cards.map((card) => [card, card.textContent.toLowerCase()]));
-  const names = ["q", "board", "state", "type", "posted", "remote", "sort"];
+  const names = ["q", "board", "state", "area", "type", "posted", "remote", "sort"];
   const day = 86400000;
   const training = ["Internship", "Fellowship"];
 
@@ -39,6 +39,7 @@
     const d = card.dataset;
     if (f.board && d.board !== f.board) return false;
     if (f.state && d.state !== f.state) return false;
+    if (f.area && d.area !== f.area) return false;
     if (f.remote && !d.remote) return false;
     if (f.posted && !(d.posted && Date.now() - Date.parse(d.posted) <= Number(f.posted) * day)) return false;
     if (f.type) {

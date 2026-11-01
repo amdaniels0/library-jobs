@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 
 from . import config, db, trends
-from .text import US_STATES, location_bucket, parse_time
+from .text import US_STATES, job_family, location_bucket, parse_time
 
 log = logging.getLogger(__name__)
 TEMPLATES = Path(__file__).parent / "templates"
@@ -70,6 +70,7 @@ def _card(job, order, now) -> str:
     board = _board(job["source"])
     attrs = {
         "data-order": order, "data-board": board, "data-state": location_key(job),
+        "data-area": job_family(job["title"]),
         "data-types": "|".join(types), "data-remote": job["remote"],
         "data-posted": posted.date().isoformat() if posted else "",
         "data-deadline": deadline, "data-org": job["organization"].lower(),
@@ -126,14 +127,17 @@ def _options(counts: dict, labels=None) -> str:
 
 
 def render_index(jobs, now) -> str:
-    boards, states = {}, {}
+    boards, states, areas = {}, {}, {}
     for job in jobs:
         boards[_board(job["source"])] = boards.get(_board(job["source"]), 0) + 1
+        areas[job_family(job["title"])] = areas.get(job_family(job["title"]), 0) + 1
         key = location_key(job)
         states[key] = states.get(key, 0) + 1
     state_labels = {**US_STATES, **LOCATION_GROUPS}
     ordered_states = dict(sorted(states.items(), key=lambda kv: (
         list(LOCATION_GROUPS).index(kv[0]) + 1 if kv[0] in LOCATION_GROUPS else 0, state_labels.get(kv[0], kv[0]))))
+    # Largest first, as on the Trends page, with "Other" last.
+    ordered_areas = dict(sorted(areas.items(), key=lambda kv: (kv[0] == "Other", -kv[1], kv[0])))
     sources = ", ".join(f'<a href="{url}">{escape(name)}</a>' for name, url in BOARD_URLS.items() if name in boards)
 
     replacements = {
@@ -146,6 +150,7 @@ def render_index(jobs, now) -> str:
         "{{expiry_days}}": str(config.EXPIRY_DAYS),
         "{{board_options}}": _options(dict(sorted(boards.items()))),
         "{{state_options}}": _options(ordered_states, state_labels),
+        "{{area_options}}": _options(ordered_areas),
         "{{sources}}": sources,
         "{{jobs}}": "\n".join(_card(job, i, now) for i, job in enumerate(jobs)),
     }
