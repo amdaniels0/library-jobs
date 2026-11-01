@@ -33,7 +33,7 @@ def _job(entry, source, *, title, organization="", location="", salary="", summa
         "state": state,
         "remote": remote or remote_status(title, location),
         "salary": salary,
-        "job_type": ", ".join(job_types(title, employment)),
+        "job_type": ", ".join(job_types(title, employment, summary)),
         "deadline": deadline,
         "summary": truncate(summary),
         "url": canonical_url(url or entry.get("link", "")),
@@ -242,7 +242,7 @@ def fetch_usajobs(source, session) -> list:
         result = response.json()["SearchResult"]
         pages = int(result.get("UserArea", {}).get("NumberOfPages") or 1)
         items = [item.get("MatchedObjectDescriptor", {}) for item in result.get("SearchResultItems", [])]
-        schedules.update(str([s.get("Name") for s in item.get("PositionSchedule") or []]) for item in items)
+        schedules.update(str([s.get("Code") for s in item.get("PositionSchedule") or []]) for item in items)
         jobs.extend(parse_usajobs(item, source) for item in items)
         page += 1
     log.info("USAJOBS schedules: %s", dict(schedules))

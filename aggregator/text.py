@@ -250,12 +250,22 @@ def employment_label(raw) -> str:
     return ""
 
 
-def job_types(title: str, employment_types=()) -> list:
+# A labelled schedule field in the posting text ("Work Type: Part Time", "Full/Part Time: Full-Time").
+# Looser phrasing ("full-time position") also matches page boilerplate, so it isn't used.
+_SCHEDULE_FIELD_RE = re.compile(
+    r"\b(?:work type|full/part time|employee type|employment type|job type|work schedule|schedule)\s*:\s*"
+    r"(?:regular\s+)?(full|part)[- ]?time\b", re.IGNORECASE)
+
+
+def job_types(title: str, employment_types=(), text: str = "") -> list:
     found = []
     for raw in employment_types or ():
         label = employment_label(raw)
         if label and label not in found:
             found.append(label)
+    field = _SCHEDULE_FIELD_RE.search(text or "")
+    if field and not {"Full-time", "Part-time"} & set(found):
+        found.append(f"{field.group(1).capitalize()}-time")
     for label, pattern in _TYPE_PATTERNS:
         if label not in found and pattern.search(title or ""):
             found.append(label)

@@ -44,6 +44,11 @@ def test_job_types_from_title_and_schema():
     assert job_types("Archivist (term)") == ["Temporary"]
     assert job_types("Project Archivist") == ["Temporary"]
     assert job_types("Project Manager, Digital Initiatives") == []
+    assert job_types("Visitor Services Assistant", text="Job No: 541775 Work Type: Part Time Location: Main") == ["Part-time"]
+    assert job_types("Librarian", text="Regular/Temporary: Regular Full/Part Time: Full-Time Job ID") == ["Full-time"]
+    assert job_types("Metadata Librarian", text="Work type: Regular Full-time (Benefits eligible)") == ["Full-time"]
+    assert job_types("Adjunct Faculty", text="Full-time Faculty Positions") == []  # page boilerplate
+    assert job_types("Librarian", ["PART_TIME"], text="Employee Type: Full-Time") == ["Part-time"]  # the board's own label wins
     assert job_types("Librarian", ["FULL_TIME"]) == ["Full-time"]
     assert job_types("Library Assistant", ["PART_TIME", "FULL_TIME"]) == ["Part-time"]
 
