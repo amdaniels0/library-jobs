@@ -172,12 +172,6 @@ button {
 .table-view th, .table-view td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--grid); }
 .table-view td:nth-child(2) { font-variant-numeric: tabular-nums; }
 
-.trends-caveat { margin: 20px 0 0; color: var(--muted); font-size: 0.9rem; }
-.data-note { margin: 28px 0 8px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; max-width: 75ch; }
-.data-note h2 { margin: 0 0 8px; font-size: 1.15rem; }
-.data-note p, .data-note li { line-height: 1.55; }
-.data-note li + li { margin-top: 8px; }
-
 .tooltip {
   position: absolute; z-index: 10; max-width: 260px; pointer-events: none;
   background: var(--surface); color: var(--text); border: 1px solid var(--border);

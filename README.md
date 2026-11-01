@@ -3,7 +3,7 @@
 A consolidated list of library, archives, museum, and information science jobs, gathered from several job boards twice a day.
 
 - **[Browse jobs](https://amdaniels0.github.io/library-jobs/)**: search and filter by board, state, job type, posting date, and remote work. Filters live in the URL, so a filtered view can be bookmarked or shared.
-- **[Trends](https://amdaniels0.github.io/library-jobs/trends.html)**: new postings per month; where the open jobs are (by state, US without a state, by country abroad, or not listed); job families and median listed pay by family; the overall pay distribution; upcoming deadlines; how long postings stay up; job types; boards; and top employers. Rebuilt on every run. The numbers behind it are in [`trends.json`](https://amdaniels0.github.io/library-jobs/trends.json). The "About this data" note at the bottom of the page is [`aggregator/templates/data-note.html`](aggregator/templates/data-note.html); edit it directly.
+- **[Trends](https://amdaniels0.github.io/library-jobs/trends.html)**: new postings per month; where the open jobs are (by state, US without a state, by country abroad, or not listed); job families and median listed pay by family; the overall pay distribution; upcoming deadlines; how long postings stay up; job types; boards; and top employers. Rebuilt on every run. The numbers behind it are in [`trends.json`](https://amdaniels0.github.io/library-jobs/trends.json).
 - **[RSS feed](https://amdaniels0.github.io/library-jobs/consolidated-jobs.xml)**: the 500 most recently found jobs.
 - **[JSON](https://amdaniels0.github.io/library-jobs/jobs.json)**: every open job, for programmatic use.
 

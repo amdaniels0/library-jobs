@@ -342,8 +342,6 @@ def render(stats, now) -> str:
              stats["top_employers"], "employer", "open jobs", "Employer"),
     ]
     replacements = {
-        # First, so placeholders inside the editable note are filled in too.
-        "{{data_note}}": (TEMPLATES / "data-note.html").read_text(),
         "{{title}}": escape(f"Trends · {config.SITE_TITLE}"),
         "{{site_title}}": escape(config.SITE_TITLE),
         "{{updated}}": now.astimezone(LOCAL).strftime("%b %-d, %Y at %-I:%M %p %Z"),

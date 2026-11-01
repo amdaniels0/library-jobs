@@ -117,7 +117,6 @@ def test_trends_page_is_built_and_escaped(conn, tmp_path):
     assert "{{" not in page
     assert "<img src=x" not in page and "&lt;img src=x" in page
     assert "No data" in page and "Show as table" in page
-    assert 'id="about-this-data"' in page and f'href="{config.REPO_URL}/issues"' in page
     assert json.loads((out / "trends.json").read_text())["open_jobs"] == 3
     assert (out / "trends.js").exists()
     assert 'href="trends.html"' in (out / "index.html").read_text()

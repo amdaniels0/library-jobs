@@ -14,7 +14,6 @@
     <p class="lede">What the jobs collected by {{site_title}} show over time. Updated {{updated}}.</p>
     <nav class="links" aria-label="Site">
       <a href="./">All jobs</a>
-      <a href="#about-this-data">About this data</a>
       <a href="trends.json">Trends data (JSON)</a>
       <a href="{{repo}}">Source code</a>
     </nav>
@@ -22,11 +21,15 @@
 </header>
 
 <main class="wrap trends">
-  <p class="trends-caveat">These figures describe the job boards this site collects from, not the whole job market. <a href="#about-this-data">Read about the data</a> before drawing conclusions.</p>
   <div class="tiles">{{tiles}}</div>
 {{charts}}
-{{data_note}}
 </main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Counts reflect what the job boards publish, not the whole job market: some employers post only on their own sites, and the set of boards has changed over time (noted on the monthly chart). A job reposted after expiring counts again in the month it reappears. Pay figures cover only postings that list pay.</p>
+  </div>
+</footer>
 <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
 <script src="trends.js?v={{version}}"></script>
 </body>
